@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { OTPInput } from "./input-otp";
+import { OTPInput } from "../input-otp";
 import { toast } from "sonner";
 
 const loginPasswordSchema = z.object({
