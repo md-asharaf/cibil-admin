@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { OTPInput } from "../input-otp";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth-context";
 
 const loginPasswordSchema = z.object({
     email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
@@ -37,7 +38,8 @@ export default function SignIn() {
     const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
     const [otpSent, setOtpSent] = useState(false);
     const [showOTPInput, setShowOTPInput] = useState(false);
-    const router = useRouter()
+    const router = useRouter();
+    const { login, loginWithOTP } = useAuth();
     const passwordForm = useForm<LoginPasswordFormValues>({
         resolver: zodResolver(loginPasswordSchema),
         defaultValues: {
@@ -55,24 +57,12 @@ export default function SignIn() {
 
     const handlePasswordLogin = async (data: LoginPasswordFormValues) => {
         setLoading(true);
-
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        setLoading(false);
-
-        toast.success("Login successful", {
-            description: "Welcome back!",
-        });
-
-        // Check if 2FA is enabled (from registration flow)
-        const has2FA = sessionStorage.getItem("2faEnabled") === "true";
-
-        if (has2FA) {
-            router.push("/verify-2fa");
-        } else {
-            // Show option to enable 2FA
-            router.push("/enable-2fa-prompt");
+        try {
+            await login(data.email, data.password);
+        } catch (error) {
+            // Error is handled in auth context
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -93,22 +83,13 @@ export default function SignIn() {
 
     const handleOTPLogin = async (otp: string) => {
         setLoading(true);
-
-        // Simulate API verification
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        setLoading(false);
-
-        toast.success("Login successful", {
-            description: "Welcome back!",
-        });
-
-        const has2FA = sessionStorage.getItem("2faEnabled") === "true";
-
-        if (has2FA) {
-            router.push("/verify-2fa");
-        } else {
-            router.push("/enable-2fa-prompt");
+        try {
+            const email = otpForm.getValues("email");
+            await loginWithOTP(email, otp);
+        } catch (error) {
+            // Error is handled in auth context
+        } finally {
+            setLoading(false);
         }
     };
 

@@ -5,26 +5,23 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { OTPInput } from "../input-otp";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function Verify2FA() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const { verify2FA } = useAuth();
 
     const handleVerify = async (code: string) => {
         setLoading(true);
-
-        // Simulate API verification
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        setLoading(false);
-        setSuccess(true);
-
-        toast.success("Verification successful! Access granted.");
-
-        setTimeout(() => {
-            sessionStorage.setItem("isAuthenticated", "true");
-            window.location.href = "/";
-        }, 1500);
+        try {
+            await verify2FA(code);
+            setSuccess(true);
+        } catch (error) {
+            // Error is handled in auth context
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -53,7 +50,7 @@ export default function Verify2FA() {
                         )}
 
                         <Link
-                            href="/sign-in">
+                            href="/login">
                             <Button
                                 variant="link"
                                 className="w-full"

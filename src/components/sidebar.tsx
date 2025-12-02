@@ -1,14 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { ChevronLeft } from "lucide-react";
-import Image from "next/image";
-import { MdOutlineSettings, MdSpaceDashboard } from "react-icons/md";
-import { CgNotes } from "react-icons/cg";
-import { GrMail } from "react-icons/gr";
-import { FaRibbon } from "react-icons/fa";
+import { ChevronLeft, LogOut, FileText, Users, BarChart3, Settings, LayoutDashboard } from "lucide-react";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useAuth } from "@/contexts/auth-context";
 
 
 interface SidebarContextType {
@@ -42,15 +38,19 @@ export const SidebarProvider = ({ children }: { children: ReactNode }) => {
 // Sidebar Component
 export const Sidebar = () => {
     const { collapsed, toggleSidebar } = useSidebar();
-
+    const { user, logout } = useAuth();
 
     const menuItems = [
-        { icon: <MdSpaceDashboard size={22} />, id: "dashboard", href: "" },
-        { icon: <CgNotes size={22} />, id: "posts", href: "posts" },
-        { icon: <GrMail size={22} />, id: "mail", href: "mail" },
-        { icon: <FaRibbon size={22} />, id: "credit", href: "credit" },
-        { icon: <MdOutlineSettings size={22} />, id: "settings", href: "settings" },
+        { icon: <LayoutDashboard size={22} />, id: "Dashboard", href: "", label: "Dashboard" },
+        { icon: <FileText size={22} />, id: "Reports", href: "/reports", label: "Credit Reports" },
+        { icon: <Users size={22} />, id: "Users", href: "/users", label: "User Management" },
+        { icon: <BarChart3 size={22} />, id: "Analytics", href: "/analytics", label: "Analytics" },
+        { icon: <Settings size={22} />, id: "Settings", href: "/settings", label: "Settings" },
     ];
+
+    const handleLogout = () => {
+        logout();
+    };
 
 
     return (
@@ -61,17 +61,16 @@ export const Sidebar = () => {
             <div className="flex flex-col gap-8 mt-4">
                 {menuItems.map((item) => (
                     <Tooltip key={item.id}>
-                        <TooltipTrigger>
+                        <TooltipTrigger asChild>
                             <Link
-                                href={`/${item.href}`}
-                                className="p-3 rounded-xl hover:bg-muted-foreground transition flex items-center gap-4"
+                                href={item.href}
+                                className="p-3 rounded-xl hover:bg-white/20 transition flex items-center gap-4"
                             >
                                 {item.icon}
                             </Link>
-
                         </TooltipTrigger>
                         <TooltipContent side="right">
-                            <p>{item.id}</p>
+                            <p>{item.label}</p>
                         </TooltipContent>
                     </Tooltip>
                 ))}
@@ -97,20 +96,39 @@ export const Sidebar = () => {
                 </Tooltip>
             </div>
 
-            {/* User Icon */}
-            <Tooltip>
-                <TooltipTrigger>
-                    <Link href="#" className="mb-4 cursor-pointer p-1 rounded-xl transition">
-                        <Avatar className="h-10 w-10">
-                            <AvatarImage src="https://github.com/shadcn.png" />
-                            <AvatarFallback>Avatar</AvatarFallback>
-                        </Avatar>
-                    </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                    <p>Your Profile</p>
-                </TooltipContent>
-            </Tooltip>
+            {/* User Actions */}
+            <div className="flex flex-col gap-4 mb-4">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Link href="/profile" className="cursor-pointer p-1 rounded-xl transition hover:bg-white/20">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src="https://github.com/shadcn.png" />
+                                <AvatarFallback>
+                                    {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'AD'}
+                                </AvatarFallback>
+                            </Avatar>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                        <p>{user?.name || 'Your Profile'}</p>
+                    </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            onClick={handleLogout}
+                            className="p-3 rounded-xl hover:bg-white/20 transition"
+                            variant="ghost"
+                        >
+                            <LogOut size={22} />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                        <p>Logout</p>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
         </div >
     );
 };

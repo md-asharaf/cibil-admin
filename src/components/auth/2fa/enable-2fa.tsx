@@ -9,7 +9,7 @@ export const Enable2FAPrompt = () => {
 
     const handleLater = () => {
         sessionStorage.setItem("isAuthenticated", "true");
-        router.push("/dashboard");
+        router.push("/");
     };
 
     return (
