@@ -40,10 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Token expired, try to refresh
             await refreshToken();
           }
+        } else {
+          // Bypass login - set default user for development
+          const defaultUser: User = {
+            id: '1',
+            name: 'Admin User',
+            email: 'admin@cibil.com',
+            role: 'Administrator',
+            phone: '+91 98765 43210',
+          };
+          setUser(defaultUser);
+          localStorage.setItem('user_data', JSON.stringify(defaultUser));
+          sessionStorage.setItem('isAuthenticated', 'true');
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        clearAuth();
+        // Set default user even on error
+        const defaultUser: User = {
+          id: '1',
+          name: 'Admin User',
+          email: 'admin@cibil.com',
+          role: 'Administrator',
+          phone: '+91 98765 43210',
+        };
+        setUser(defaultUser);
+        localStorage.setItem('user_data', JSON.stringify(defaultUser));
+        sessionStorage.setItem('isAuthenticated', 'true');
       } finally {
         setIsLoading(false);
       }

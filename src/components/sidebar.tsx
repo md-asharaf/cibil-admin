@@ -41,7 +41,7 @@ export const Sidebar = () => {
     const { user, logout } = useAuth();
 
     const menuItems = [
-        { icon: <LayoutDashboard size={22} />, id: "Dashboard", href: "", label: "Dashboard" },
+        { icon: <LayoutDashboard size={22} />, id: "Dashboard", href: "/", label: "Dashboard" },
         { icon: <FileText size={22} />, id: "Reports", href: "/reports", label: "Credit Reports" },
         { icon: <Users size={22} />, id: "Users", href: "/users", label: "User Management" },
         { icon: <BarChart3 size={22} />, id: "Analytics", href: "/analytics", label: "Analytics" },
@@ -55,7 +55,7 @@ export const Sidebar = () => {
 
     return (
         <div
-            className={`h-[80vh] rounded-br-[50px] rounded-tl-4xl  flex flex-col justify-between items-center bg-primary text-primary-foreground py-6 transition-all duration-300 sticky top-0 ${collapsed ? "w-20" : " w-24"
+            className={`h-[80vh] rounded-br-[50px]  flex flex-col justify-between items-center bg-primary text-primary-foreground py-6 transition-all duration-300 sticky top-0 ${collapsed ? "w-20" : " w-24"
                 }`}
         >
             <div className="flex flex-col gap-8 mt-4">
