@@ -1,30 +1,40 @@
 /**
- * API Response Types
+ * API Response Types - Matches backend ApiResponse structure
  */
 
-// Generic API Response wrapper
 export interface ApiResponse<T = any> {
+  statusCode: number;
   success: boolean;
-  data: T;
-  message?: string;
-  errors?: string[];
+  message: string;
+  data?: T;
 }
 
-// Paginated Response
+/**
+ * API Error Response
+ */
+export interface ApiErrorResponse {
+  statusCode: number;
+  success: false;
+  message: string;
+  error?: string;
+  details?: any;
+}
+
+/**
+ * Pagination metadata
+ */
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+/**
+ * Paginated response wrapper
+ */
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-// Error Response
-export interface ApiError {
-  message: string;
-  errors?: Record<string, string[]>;
-  statusCode?: number;
+  pagination: PaginationMeta;
 }
 
