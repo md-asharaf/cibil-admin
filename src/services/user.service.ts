@@ -1,107 +1,75 @@
 /**
- * User Service
+ * User Service - Matches backend /users routes
  */
 
-import axiosClient from './axios-client';
+import axiosClient from "./axios-client";
 import {
-  UserProfile,
-  UpdateUserRequest,
-  ChangePasswordRequest,
-  UserListFilters,
-  UserStats,
-  PaginatedResponse,
   ApiResponse,
-} from '@/types';
+  User,
+  UserWithRelations,
+  CreateUserRequest,
+  CreateAdminRequest,
+  UpdateUserRequest,
+  UserQueryFilters,
+  UsersListResponse,
+} from "@/types";
 
 export const userService = {
   /**
-   * Get user profile
+   * GET /users
+   * Get all users with filters and pagination
    */
-  getProfile: async (): Promise<ApiResponse<UserProfile>> => {
-    const response = await axiosClient.get<ApiResponse<UserProfile>>('/users/profile');
+  getUsers: async (filters?: UserQueryFilters): Promise<ApiResponse<UsersListResponse>> => {
+    const params = new URLSearchParams();
+    if (filters?.type) params.append("type", filters.type);
+    if (filters?.isVerified !== undefined) params.append("isVerified", String(filters.isVerified));
+    if (filters?.role) params.append("role", filters.role);
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.page) params.append("page", String(filters.page));
+    if (filters?.limit) params.append("limit", String(filters.limit));
+
+    const queryString = params.toString();
+    const url = `/users${queryString ? `?${queryString}` : ""}`;
+    const response = await axiosClient.get<ApiResponse<UsersListResponse>>(url);
     return response.data;
   },
 
   /**
-   * Update user profile
-   */
-  updateProfile: async (data: UpdateUserRequest): Promise<ApiResponse<UserProfile>> => {
-    const response = await axiosClient.put<ApiResponse<UserProfile>>('/users/profile', data);
-    return response.data;
-  },
-
-  /**
-   * Change password
-   */
-  changePassword: async (data: ChangePasswordRequest): Promise<ApiResponse<{ changed: boolean }>> => {
-    const response = await axiosClient.post<ApiResponse<{ changed: boolean }>>('/users/change-password', data);
-    return response.data;
-  },
-
-  /**
-   * Get all users with filters
-   */
-  getUsers: async (filters?: UserListFilters): Promise<ApiResponse<PaginatedResponse<UserProfile>>> => {
-    const response = await axiosClient.get<ApiResponse<PaginatedResponse<UserProfile>>>('/users', {
-      params: filters,
-    });
-    return response.data;
-  },
-
-  /**
+   * GET /users/:id
    * Get user by ID
    */
-  getUserById: async (userId: string): Promise<ApiResponse<UserProfile>> => {
-    const response = await axiosClient.get<ApiResponse<UserProfile>>(`/users/${userId}`);
+  getUserById: async (id: string): Promise<ApiResponse<UserWithRelations>> => {
+    const response = await axiosClient.get<ApiResponse<UserWithRelations>>(`/users/${id}`);
     return response.data;
   },
 
   /**
-   * Create new user
+   * PUT /users/:id
+   * Update user
    */
-  createUser: async (data: UpdateUserRequest): Promise<ApiResponse<UserProfile>> => {
-    const response = await axiosClient.post<ApiResponse<UserProfile>>('/users', data);
+  updateUser: async (id: string, data: UpdateUserRequest): Promise<ApiResponse<UserWithRelations>> => {
+    const response = await axiosClient.put<ApiResponse<UserWithRelations>>(`/users/${id}`, data);
     return response.data;
   },
 
   /**
-   * Update user by ID
+   * PATCH /users/:id
+   * Partially update user
    */
-  updateUser: async (userId: string, data: UpdateUserRequest): Promise<ApiResponse<UserProfile>> => {
-    const response = await axiosClient.put<ApiResponse<UserProfile>>(`/users/${userId}`, data);
+  patchUser: async (id: string, data: Partial<UpdateUserRequest>): Promise<ApiResponse<UserWithRelations>> => {
+    const response = await axiosClient.patch<ApiResponse<UserWithRelations>>(`/users/${id}`, data);
     return response.data;
   },
 
   /**
-   * Delete user
+   * DELETE /users/:id
+   * Delete user (Super Admin only)
    */
-  deleteUser: async (userId: string): Promise<ApiResponse<{ deleted: boolean }>> => {
-    const response = await axiosClient.delete<ApiResponse<{ deleted: boolean }>>(`/users/${userId}`);
-    return response.data;
-  },
-
-  /**
-   * Suspend user
-   */
-  suspendUser: async (userId: string): Promise<ApiResponse<{ suspended: boolean }>> => {
-    const response = await axiosClient.post<ApiResponse<{ suspended: boolean }>>(`/users/${userId}/suspend`);
-    return response.data;
-  },
-
-  /**
-   * Activate user
-   */
-  activateUser: async (userId: string): Promise<ApiResponse<{ activated: boolean }>> => {
-    const response = await axiosClient.post<ApiResponse<{ activated: boolean }>>(`/users/${userId}/activate`);
-    return response.data;
-  },
-
-  /**
-   * Get user statistics
-   */
-  getUserStats: async (): Promise<ApiResponse<UserStats>> => {
-    const response = await axiosClient.get<ApiResponse<UserStats>>('/users/stats');
+  deleteUser: async (id: string): Promise<ApiResponse<{}>> => {
+    const response = await axiosClient.delete<ApiResponse<{}>>(`/users/${id}`);
     return response.data;
   },
 };
+
+export default userService;
 

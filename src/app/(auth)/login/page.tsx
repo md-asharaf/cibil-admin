@@ -1,9 +1,17 @@
-import SignIn from "@/components/auth/sign-in/login-form";
+import SignInForm from "@/components/auth/SignInForm";
+import { PublicRoute } from "@/components/auth/PublicRoute";
+import { Metadata } from "next";
 
-export default function SignInPage() {
-    return (
-        <div className="flex items-center justify-center min-h-screen p-4">
-            <SignIn />
-        </div>
-    )
+export const metadata: Metadata = {
+  title: "Sign In | CIBIL Admin Dashboard",
+  description: "Sign in to your CIBIL Admin Dashboard account",
+};
+
+export default function LoginPage() {
+  return (
+    <PublicRoute>
+      <SignInForm />
+    </PublicRoute>
+  );
 }
+

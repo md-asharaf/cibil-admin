@@ -1,39 +1,37 @@
 "use client"
 
-import { Sidebar, SidebarProvider } from "@/components/sidebar";
-import { useAuth } from "@/contexts/auth-context";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Sidebar, SidebarProvider, SidebarBackdrop, useSidebar } from "../../components/sidebar";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import AppHeader from "@/layout/AppHeader";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated, isLoading } = useAuth();
-    const router = useRouter();
-
-    // Bypass login check for development
-    // useEffect(() => {
-    //     if (!isLoading && !isAuthenticated) {
-    //         router.push("/login");
-    //     }
-    // }, [isAuthenticated, isLoading, router]);
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated) {
-        return null;
-    }
+function DashboardContent({ children }: { children: React.ReactNode }) {
+    const { isExpanded, isMobileOpen, isMobile, isHovered } = useSidebar();
+    
+    // Dynamic margin for main content based on sidebar state (matching template)
+    const mainContentMargin = isMobileOpen || isMobile
+        ? "ml-0"
+        : isExpanded || isHovered
+        ? "md:ml-[290px]"
+        : "md:ml-[90px]";
 
     return (
-        <SidebarProvider>
-            <div className="flex min-h-screen">
-                <Sidebar />
-                <main className="flex-1 min-h-screen">{children}</main>
-            </div>
-        </SidebarProvider>
+        <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+            <AppHeader />
+            <main className="flex-1 p-4 md:p-6">{children}</main>
+        </div>
+    );
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+    return (
+        <AuthGuard>
+            <SidebarProvider>
+                <SidebarBackdrop />
+                <div className="flex min-h-screen">
+                    <Sidebar />
+                    <DashboardContent>{children}</DashboardContent>
+                </div>
+            </SidebarProvider>
+        </AuthGuard>
     );
 }

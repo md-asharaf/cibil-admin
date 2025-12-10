@@ -1,68 +1,125 @@
 /**
- * User Management Types
+ * User Types - Matches backend IUser interface
  */
 
-import { User } from './auth.types';
+// Use type-only imports to avoid circular dependencies
+import type { Permission } from "./permission.types";
+import type { Role } from "./role.types";
 
-export interface UserProfile extends User {
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
-  dateOfBirth?: string;
-  pan?: string;
-  aadhaar?: string;
-  // Additional frontend fields
-  registeredDate?: string;
-  lastLogin?: string | Date;
-  reportsCount?: number;
-  status?: 'Active' | 'Suspended' | 'Inactive';
+export interface User {
+  _id: string;
+  id?: string; // Alias for _id
+  name: string;
+  email?: string;
+  phone?: string;
+  type: "user" | "admin";
+  role?: string | Role | null;
+  permissions?: string[] | Permission[];
+  isVerified: boolean;
+  twoFactorEnabled: boolean;
+  createdBy?: string | User | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
+/**
+ * User with populated relations
+ */
+export interface UserWithRelations extends Omit<User, "role" | "permissions" | "createdBy"> {
+  role?: Role | null;
+  permissions?: Permission[];
+  createdBy?: {
+    _id: string;
+    name: string;
+    email?: string;
+  } | null;
+}
+
+/**
+ * User creation request
+ */
 export interface CreateUserRequest {
   name: string;
   email?: string;
   phone?: string;
   password: string;
-  type?: 'user' | 'admin';
+  type?: "user" | "admin";
   role?: string;
-  permissions?: string[];
-  isVerified?: boolean;
 }
 
+/**
+ * Admin creation request
+ */
+export interface CreateAdminRequest {
+  name: string;
+  email?: string;
+  phone?: string;
+  password: string;
+  role?: string;
+  permissions?: string[];
+}
+
+/**
+ * User update request
+ */
 export interface UpdateUserRequest {
   name?: string;
   email?: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
+  isVerified?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
-export interface UserListFilters {
-  search?: string;
+/**
+ * User query filters
+ */
+export interface UserQueryFilters {
+  type?: "user" | "admin";
+  isVerified?: boolean;
   role?: string;
-  status?: 'Active' | 'Suspended' | 'Inactive';
+  search?: string;
   page?: number;
   limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
 }
 
-export interface UserStats {
-  total: number;
-  active: number;
-  suspended: number;
-  inactive: number;
-  newThisMonth: number;
+/**
+ * Users list response
+ */
+export interface UsersListResponse {
+  users: UserWithRelations[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+/**
+ * Helper function to get user ID
+ */
+export function getUserId(user: User): string {
+  return user._id || user.id || "";
+}
+
+/**
+ * Helper function to get user role name
+ */
+export function getUserRoleName(user: User): string {
+  if (typeof user.role === "string") {
+    return user.role;
+  }
+  if (user.role && typeof user.role === "object" && "name" in user.role) {
+    return user.role.name;
+  }
+  return user.type === "admin" ? "Administrator" : "User";
+}
+
+/**
+ * Helper function to check if user is admin
+ */
+export function isAdmin(user: User | null | undefined): boolean {
+  if (!user) return false;
+  return user.type === "admin" || getUserRoleName(user) === "Administrator";
 }
 
