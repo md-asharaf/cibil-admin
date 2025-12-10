@@ -1,148 +1,140 @@
 /**
- * Authentication Types
+ * Authentication Types - Matches backend auth validations and responses
  */
 
-export interface BackupCode {
-  code: string;
-  used: boolean;
-  usedAt?: Date;
-}
+import { User } from "./user.types";
 
-export interface Role {
-  _id: string;
-  name: string;
-  description?: string;
-  permissions?: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export interface Permission {
-  _id: string;
-  name: string;
-  description?: string;
-  resource?: string;
-  action?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export interface User {
-  _id: string;
-  name: string;
+/**
+ * Login request - email OR phone required
+ */
+export interface LoginRequest {
   email?: string;
   phone?: string;
-  password?: string; // Usually excluded from API responses, but included for completeness
-  otp?: string | null;
-  otpExpiry?: Date | null;
-  type: 'user' | 'admin';
-  role?: string | Role | 'Administrator' | 'User' | 'Viewer' | null; // ObjectId, populated Role, or legacy string format
-  permissions?: string[] | Permission[]; // Array of ObjectIds or populated Permissions
-  createdBy?: string | User | null; // ObjectId or populated User
-  isVerified: boolean;
-  twoFactorEnabled: boolean;
-  twoFactorSecret?: string | null; // Usually excluded from API responses
-  backupCodes?: BackupCode[];
-  createdAt?: Date;
-  updatedAt?: Date;
-  // Frontend convenience fields
-  id?: string; // Alias for _id for compatibility
-  avatar?: string; // Optional frontend field
-}
-
-/**
- * Helper function to get user role as a string
- */
-export function getUserRoleName(user: User): string {
-  if (typeof user.role === 'string') {
-    // If it's already a string (legacy format or ObjectId)
-    if (user.role === 'Administrator' || user.role === 'User' || user.role === 'Viewer') {
-      return user.role;
-    }
-    // If it's an ObjectId, check type field
-    return user.type === 'admin' ? 'Administrator' : 'User';
-  }
-  if (user.role && typeof user.role === 'object' && 'name' in user.role) {
-    return user.role.name;
-  }
-  // Fallback to type field
-  return user.type === 'admin' ? 'Administrator' : 'User';
-}
-
-/**
- * Helper function to check if user is admin
- */
-export function isAdmin(user: User | null | undefined): boolean {
-  if (!user) return false;
-  return user.type === 'admin' || getUserRoleName(user) === 'Administrator';
-}
-
-/**
- * Helper function to get user ID (handles both _id and id)
- */
-export function getUserId(user: User): string {
-  return user._id || user.id || '';
-}
-
-export interface LoginRequest {
-  email: string;
   password: string;
 }
 
-export interface LoginWithOTPRequest {
-  email: string;
+/**
+ * Register request - email OR phone required
+ */
+export interface RegisterRequest {
+  name: string;
+  email?: string;
+  phone?: string;
+  password: string;
+}
+
+/**
+ * Send OTP request
+ */
+export interface SendOtpRequest {
+  email?: string;
+  phone?: string;
+}
+
+/**
+ * Verify OTP request
+ */
+export interface VerifyOtpRequest {
+  email?: string;
+  phone?: string;
   otp: string;
 }
 
-export interface LoginResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  requires2FA?: boolean;
-}
-
-export interface Verify2FARequest {
+/**
+ * Login with 2FA request
+ */
+export interface Login2FARequest {
+  userId: string;
   code: string;
-  email?: string;
 }
 
-export interface Verify2FAResponse {
-  verified: boolean;
-  accessToken?: string;
-  refreshToken?: string;
-}
-
+/**
+ * Refresh token request
+ */
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
+/**
+ * 2FA Setup response
+ */
+export interface TwoFASetupResponse {
+  qrCode: string;
+  manualKey: string;
+  otpauthUrl: string;
 }
 
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  phone: string;
-  password: string;
-}
-
-export interface RegisterResponse {
-  user: User;
-  message: string;
-}
-
-export interface Setup2FARequest {
-  secret: string;
+/**
+ * 2FA Verify request (for setup)
+ */
+export interface TwoFAVerifyRequest {
   code: string;
 }
 
-export interface Setup2FAResponse {
-  success: boolean;
+/**
+ * 2FA Disable request
+ */
+export interface TwoFADisableRequest {
+  password: string;
+}
+
+/**
+ * Backup codes response
+ */
+export interface BackupCodesResponse {
   backupCodes: string[];
-  qrCode?: string;
+}
+
+/**
+ * Masked backup codes response
+ */
+export interface MaskedBackupCodesResponse {
+  backupCodes: {
+    code: string;
+    used: boolean;
+  }[];
+}
+
+/**
+ * Login response
+ */
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+  requires2FA?: boolean;
+  userId?: string;
+}
+
+/**
+ * OTP verification response
+ */
+export interface VerifyOtpResponse {
+  accessToken?: string;
+  refreshToken?: string;
+  user?: User;
+  requires2FA?: boolean;
+  userId?: string;
+}
+
+/**
+ * Refresh token response
+ */
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/**
+ * Register response
+ */
+export interface RegisterResponse {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role?: string | null;
+  isVerified: boolean;
+  twoFactorEnabled: boolean;
 }
 

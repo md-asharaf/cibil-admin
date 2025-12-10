@@ -1,106 +1,258 @@
-import axiosClient from './axios-client';
+/**
+ * Auth Service - Matches backend /auth routes
+ */
+
+import axiosClient from "./axios-client";
 import {
+  ApiResponse,
   LoginRequest,
   LoginResponse,
-  LoginWithOTPRequest,
-  Verify2FARequest,
-  Verify2FAResponse,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
   RegisterRequest,
   RegisterResponse,
-  Setup2FARequest,
-  Setup2FAResponse,
-  ApiResponse,
-} from '@/types';
+  SendOtpRequest,
+  VerifyOtpRequest,
+  VerifyOtpResponse,
+  Login2FARequest,
+  LoginResponse as Login2FAResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  TwoFASetupResponse,
+  TwoFAVerifyRequest,
+  TwoFADisableRequest,
+  BackupCodesResponse,
+  MaskedBackupCodesResponse,
+} from "@/types";
 
 export const authService = {
   /**
-   * Login with email and password
+   * POST /auth/login
+   * Login with email/phone and password
    */
   login: async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
-    const response = await axiosClient.post<ApiResponse<LoginResponse>>('/auth/login', data);
-    return response.data;
+    try {
+      const response = await axiosClient.post<any>("/auth/login", data);
+      
+      // Axios interceptor unwraps the response, so response.data is the inner data object
+      // Backend returns: { accessToken, refreshToken, user } or { require2FA: true, userId }
+      const responseData = response.data || response;
+      
+      // Handle 2FA requirement
+      // Backend returns: { require2FA: true, userId: user._id }
+      if (responseData.require2FA || responseData.requires2FA) {
+        return {
+          success: true,
+          statusCode: 200,
+          message: "2FA required",
+          data: {
+            user: null as any,
+            accessToken: '',
+            refreshToken: '',
+            requires2FA: true,
+            userId: responseData.userId || responseData.user_id,
+          },
+        };
+      }
+      
+      // Map backend response to frontend format
+      const loginData: LoginResponse = {
+        user: {
+          _id: responseData.user.id || responseData.user._id,
+          id: responseData.user.id || responseData.user._id,
+          name: responseData.user.name,
+          email: responseData.user.email,
+          phone: responseData.user.phone,
+          type: responseData.user.type,
+          role: responseData.user.role,
+          isVerified: responseData.user.isVerified,
+          twoFactorEnabled: responseData.user.twoFactorEnabled,
+        },
+        accessToken: responseData.accessToken,
+        refreshToken: responseData.refreshToken,
+        requires2FA: false,
+      };
+      
+      return {
+        success: true,
+        statusCode: 200,
+        data: loginData,
+        message: "Login successful",
+      };
+    } catch (error: any) {
+      throw error;
+    }
   },
 
   /**
-   * Login with OTP
-   */
-  loginWithOTP: async (data: LoginWithOTPRequest): Promise<ApiResponse<LoginResponse>> => {
-    const response = await axiosClient.post<ApiResponse<LoginResponse>>('/auth/login/otp', data);
-    return response.data;
-  },
-
-  /**
-   * Send OTP to email
-   */
-  sendOTP: async (email: string): Promise<ApiResponse<{ sent: boolean }>> => {
-    const response = await axiosClient.post<ApiResponse<{ sent: boolean }>>('/auth/otp/send', { email });
-    return response.data;
-  },
-
-  /**
-   * Verify 2FA code
-   */
-  verify2FA: async (data: Verify2FARequest): Promise<ApiResponse<Verify2FAResponse>> => {
-    const response = await axiosClient.post<ApiResponse<Verify2FAResponse>>('/auth/2fa/verify', data);
-    return response.data;
-  },
-
-  /**
-   * Refresh access token
-   */
-  refreshToken: async (data: RefreshTokenRequest): Promise<ApiResponse<RefreshTokenResponse>> => {
-    const response = await axiosClient.post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', data);
-    return response.data;
-  },
-
-  /**
+   * POST /auth/register
    * Register new user
    */
   register: async (data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> => {
-    const response = await axiosClient.post<ApiResponse<RegisterResponse>>('/auth/register', data);
+    const response = await axiosClient.post<ApiResponse<RegisterResponse>>("/auth/register", data);
     return response.data;
   },
 
   /**
-   * Setup 2FA
+   * POST /auth/otp/send
+   * Send OTP to email or phone
    */
-  setup2FA: async (data: Setup2FARequest): Promise<ApiResponse<Setup2FAResponse>> => {
-    const response = await axiosClient.post<ApiResponse<Setup2FAResponse>>('/auth/2fa/setup', data);
+  sendOtp: async (data: SendOtpRequest): Promise<ApiResponse<{ email?: string; phone?: string }>> => {
+    const response = await axiosClient.post<ApiResponse<{ email?: string; phone?: string }>>("/auth/otp/send", data);
     return response.data;
   },
 
   /**
-   * Get 2FA QR code
+   * POST /auth/otp/verify
+   * Verify OTP
    */
-  get2FAQRCode: async (): Promise<ApiResponse<{ qrCode: string; secret: string }>> => {
-    const response = await axiosClient.get<ApiResponse<{ qrCode: string; secret: string }>>('/auth/2fa/qrcode');
+  verifyOtp: async (data: VerifyOtpRequest): Promise<ApiResponse<VerifyOtpResponse>> => {
+    try {
+      const response = await axiosClient.post<any>("/auth/otp/verify", data);
+      const responseData = response.data || response;
+      
+      // Handle 2FA requirement after OTP verification
+      // Backend returns: { require2FA: true, userId: user._id }
+      if (responseData.require2FA || responseData.requires2FA) {
+        return {
+          success: true,
+          statusCode: 200,
+          message: "2FA required",
+          data: {
+            requires2FA: true,
+            userId: responseData.userId || responseData.user_id,
+          },
+        };
+      }
+      
+      // Map backend response to frontend format
+      const verifyData: VerifyOtpResponse = {
+        user: {
+          _id: responseData.user.id || responseData.user._id,
+          id: responseData.user.id || responseData.user._id,
+          name: responseData.user.name,
+          email: responseData.user.email,
+          phone: responseData.user.phone,
+          type: responseData.user.type,
+          role: responseData.user.role,
+          isVerified: responseData.user.isVerified,
+          twoFactorEnabled: responseData.user.twoFactorEnabled,
+        },
+        accessToken: responseData.accessToken,
+        refreshToken: responseData.refreshToken,
+        requires2FA: false,
+      };
+      
+      return {
+        success: true,
+        statusCode: 200,
+        data: verifyData,
+        message: "OTP verified successfully",
+      };
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  /**
+   * POST /auth/2fa/login
+   * Login with 2FA code
+   */
+  login2FA: async (data: Login2FARequest): Promise<ApiResponse<Login2FAResponse>> => {
+    try {
+      const response = await axiosClient.post<any>("/auth/2fa/login", data);
+      const responseData = response.data || response;
+      
+      // Map backend response to frontend format
+      const loginData: Login2FAResponse = {
+        user: {
+          _id: responseData.user.id || responseData.user._id,
+          id: responseData.user.id || responseData.user._id,
+          name: responseData.user.name,
+          email: responseData.user.email,
+          phone: responseData.user.phone,
+          type: responseData.user.type,
+          role: responseData.user.role,
+          isVerified: responseData.user.isVerified,
+          twoFactorEnabled: responseData.user.twoFactorEnabled,
+        },
+        accessToken: responseData.accessToken,
+        refreshToken: responseData.refreshToken,
+        requires2FA: false,
+      };
+      
+      return {
+        success: true,
+        statusCode: 200,
+        data: loginData,
+        message: "Login successful with 2FA",
+      };
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  /**
+   * POST /auth/refresh
+   * Refresh access token
+   */
+  refreshToken: async (data: RefreshTokenRequest): Promise<ApiResponse<RefreshTokenResponse>> => {
+    const response = await axiosClient.post<ApiResponse<RefreshTokenResponse>>("/auth/refresh", data);
     return response.data;
   },
 
   /**
+   * POST /auth/logout
+   * Logout user
+   */
+  logout: async (): Promise<ApiResponse<{}>> => {
+    const response = await axiosClient.post<ApiResponse<{}>>("/auth/logout");
+    return response.data;
+  },
+
+  /**
+   * POST /auth/2fa/enable
+   * Setup 2FA (get QR code)
+   */
+  twoFASetup: async (): Promise<ApiResponse<TwoFASetupResponse>> => {
+    const response = await axiosClient.post<ApiResponse<TwoFASetupResponse>>("/auth/2fa/enable");
+    return response.data;
+  },
+
+  /**
+   * POST /auth/2fa/verify
+   * Verify 2FA code (for setup)
+   */
+  twoFAVerify: async (data: TwoFAVerifyRequest): Promise<ApiResponse<{ twoFactorEnabled: boolean }>> => {
+    const response = await axiosClient.post<ApiResponse<{ twoFactorEnabled: boolean }>>("/auth/2fa/verify", data);
+    return response.data;
+  },
+
+  /**
+   * POST /auth/2fa/disable
    * Disable 2FA
    */
-  disable2FA: async (code: string): Promise<ApiResponse<{ disabled: boolean }>> => {
-    const response = await axiosClient.post<ApiResponse<{ disabled: boolean }>>('/auth/2fa/disable', { code });
+  twoFADisable: async (data: TwoFADisableRequest): Promise<ApiResponse<{ twoFactorEnabled: boolean }>> => {
+    const response = await axiosClient.post<ApiResponse<{ twoFactorEnabled: boolean }>>("/auth/2fa/disable", data);
     return response.data;
   },
 
   /**
-   * Logout
+   * POST /auth/backup-codes/generate
+   * Generate backup codes
    */
-  logout: async (): Promise<ApiResponse<{ loggedOut: boolean }>> => {
-    const response = await axiosClient.post<ApiResponse<{ loggedOut: boolean }>>('/auth/logout');
+  generateBackupCodes: async (): Promise<ApiResponse<BackupCodesResponse>> => {
+    const response = await axiosClient.post<ApiResponse<BackupCodesResponse>>("/auth/backup-codes/generate");
     return response.data;
   },
 
   /**
-   * Get current user
+   * GET /auth/backup-codes
+   * Get masked backup codes
    */
-  getCurrentUser: async (): Promise<ApiResponse<LoginResponse['user']>> => {
-    const response = await axiosClient.get<ApiResponse<LoginResponse['user']>>('/auth/me');
+  getBackupCodes: async (): Promise<ApiResponse<MaskedBackupCodesResponse>> => {
+    const response = await axiosClient.get<ApiResponse<MaskedBackupCodesResponse>>("/auth/backup-codes");
     return response.data;
   },
 };
+
+export default authService;
 
