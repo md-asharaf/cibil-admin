@@ -43,10 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           // Bypass login - set default user for development
           const defaultUser: User = {
-            id: '1',
+            _id: '1',
+            id: '1', // Alias for compatibility
             name: 'Admin User',
             email: 'admin@cibil.com',
-            role: 'Administrator',
+            type: 'admin',
+            role: 'Administrator', // Legacy format for compatibility
+            isVerified: true,
+            twoFactorEnabled: false,
             phone: '+91 98765 43210',
           };
           setUser(defaultUser);
@@ -57,10 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Auth initialization error:', error);
         // Set default user even on error
         const defaultUser: User = {
-          id: '1',
+          _id: '1',
+          id: '1', // Alias for compatibility
           name: 'Admin User',
           email: 'admin@cibil.com',
-          role: 'Administrator',
+          type: 'admin',
+          role: 'Administrator', // Legacy format for compatibility
+          isVerified: true,
+          twoFactorEnabled: false,
           phone: '+91 98765 43210',
         };
         setUser(defaultUser);

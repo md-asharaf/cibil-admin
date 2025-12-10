@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { userService } from "@/services";
-import { UpdateUserRequest, ChangePasswordRequest } from "@/types";
+import { UpdateUserRequest, ChangePasswordRequest, getUserRoleName } from "@/types";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function ProfilePage() {
@@ -29,7 +29,6 @@ export default function ProfilePage() {
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    department: "",
   });
 
   const [passwordData, setPasswordData] = useState<ChangePasswordRequest>({
@@ -45,7 +44,6 @@ export default function ProfilePage() {
         name: profileData.name,
         email: profileData.email,
         phone: profileData.phone || "",
-        department: profileData.department || "",
       });
     }
   }, [profileData]);
@@ -60,7 +58,6 @@ export default function ProfilePage() {
           name: response.data.name,
           email: response.data.email,
           phone: response.data.phone || "",
-          department: response.data.department || "",
         });
         toast.success("Profile updated", {
           description: "Your profile information has been saved"
@@ -150,20 +147,16 @@ export default function ProfilePage() {
                 </div>
               </div>
               <CardTitle className="text-xl font-semibold text-gray-900">{profile.name || "User"}</CardTitle>
-              <CardDescription className="text-sm text-gray-600">{user?.role || "User"}</CardDescription>
+              <CardDescription className="text-sm text-gray-600">{user ? getUserRoleName(user) : "User"}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3 text-sm p-3 border border-gray-200 rounded-lg bg-gray-50">
                 <Mail className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">{profile.email}</span>
+                <span className="text-gray-600">{profile.email || "Not provided"}</span>
               </div>
               <div className="flex items-center gap-3 text-sm p-3 border border-gray-200 rounded-lg bg-gray-50">
                 <Phone className="h-4 w-4 text-gray-400" />
                 <span className="text-gray-600">{profile.phone || "Not provided"}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm p-3 border border-gray-200 rounded-lg bg-gray-50">
-                <Shield className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">{profile.department || "Not specified"}</span>
               </div>
             </CardContent>
           </Card>
@@ -203,16 +196,6 @@ export default function ProfilePage() {
                   id="phone"
                   value={profile.phone}
                   onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  className="border-gray-200 focus:border-gray-400 focus:ring-gray-400"
-                  disabled={loadingProfile}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department" className="text-sm font-medium text-gray-700">Department</Label>
-                <Input
-                  id="department"
-                  value={profile.department}
-                  onChange={(e) => setProfile({ ...profile, department: e.target.value })}
                   className="border-gray-200 focus:border-gray-400 focus:ring-gray-400"
                   disabled={loadingProfile}
                 />

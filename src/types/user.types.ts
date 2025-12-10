@@ -2,6 +2,8 @@
  * User Management Types
  */
 
+import { User } from './auth.types';
+
 export interface UserProfile extends User {
   address?: string;
   city?: string;
@@ -11,13 +13,28 @@ export interface UserProfile extends User {
   dateOfBirth?: string;
   pan?: string;
   aadhaar?: string;
+  // Additional frontend fields
+  registeredDate?: string;
+  lastLogin?: string | Date;
+  reportsCount?: number;
+  status?: 'Active' | 'Suspended' | 'Inactive';
+}
+
+export interface CreateUserRequest {
+  name: string;
+  email?: string;
+  phone?: string;
+  password: string;
+  type?: 'user' | 'admin';
+  role?: string;
+  permissions?: string[];
+  isVerified?: boolean;
 }
 
 export interface UpdateUserRequest {
   name?: string;
   email?: string;
   phone?: string;
-  department?: string;
   address?: string;
   city?: string;
   state?: string;

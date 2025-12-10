@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/services";
 import { toast } from "sonner";
-import { UserProfile, UpdateUserRequest } from "@/types";
+import { UserProfile, UpdateUserRequest, getUserId, getUserRoleName } from "@/types";
 import { mockUsers } from "@/data";
 import {
   DropdownMenu,
@@ -138,8 +138,8 @@ export default function UsersPage() {
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone?.includes(searchTerm)
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.phone && user.phone.includes(searchTerm))
   );
 
   const activeUsers = statsData?.active || users.filter(u => (u as any).status !== "Suspended").length;
@@ -150,7 +150,6 @@ export default function UsersPage() {
       name: "New User",
       email: `user${Date.now()}@example.com`,
       phone: "+91 00000 00000",
-      department: "General"
     });
   };
 
@@ -298,14 +297,16 @@ export default function UsersPage() {
                   <tbody>
                     {filteredUsers.map((user) => {
                       const status = getUserStatus(user);
-                      const isSuspending = suspendMutation.isPending && suspendMutation.variables === user.id;
-                      const isActivating = activateMutation.isPending && activateMutation.variables === user.id;
-                      const isDeleting = deleteMutation.isPending && deleteMutation.variables === user.id;
+                      const userId = getUserId(user);
+                      const userRole = getUserRoleName(user);
+                      const isSuspending = suspendMutation.isPending && suspendMutation.variables === userId;
+                      const isActivating = activateMutation.isPending && activateMutation.variables === userId;
+                      const isDeleting = deleteMutation.isPending && deleteMutation.variables === userId;
                       
                       return (
-                        <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <tr key={userId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                           <td className="p-4">
-                            <span className="font-mono text-sm text-gray-900 font-medium">{user.id}</span>
+                            <span className="font-mono text-sm text-gray-900 font-medium">{userId}</span>
                           </td>
                           <td className="p-4">
                             <div className="font-medium text-sm text-gray-900">{user.name}</div>
@@ -314,17 +315,17 @@ export default function UsersPage() {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm">
                                 <Mail className="h-3 w-3 text-gray-400" />
-                                <span className="text-gray-600">{user.email}</span>
+                                <span className="text-gray-600">{user.email || "Not provided"}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
                                 <Phone className="h-3 w-3 text-gray-400" />
-                                <span className="text-gray-600">{user.phone}</span>
+                                <span className="text-gray-600">{user.phone || "Not provided"}</span>
                               </div>
                             </div>
                           </td>
                           <td className="p-4">
-                            <span className={`px-3 py-1.5 rounded-md text-xs font-semibold border ${getRoleColor(user.role)}`}>
-                              {user.role}
+                            <span className={`px-3 py-1.5 rounded-md text-xs font-semibold border ${getRoleColor(userRole)}`}>
+                              {userRole}
                             </span>
                           </td>
                           <td className="p-4">
@@ -336,7 +337,7 @@ export default function UsersPage() {
                             <span className="font-medium text-sm text-gray-900">{(user as any).reportsCount || 0}</span>
                           </td>
                           <td className="p-4 text-sm text-gray-600">
-                            {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Never"}
+                            {(user as UserProfile).lastLogin ? new Date((user as UserProfile).lastLogin!).toLocaleDateString() : "Never"}
                           </td>
                           <td className="p-4">
                             <DropdownMenu>
@@ -348,7 +349,7 @@ export default function UsersPage() {
                               <DropdownMenuContent align="end">
                                 {status === "Active" ? (
                                   <DropdownMenuItem 
-                                    onClick={() => handleSuspendUser(user.id)}
+                                    onClick={() => handleSuspendUser(userId)}
                                     disabled={isSuspending}
                                   >
                                     {isSuspending ? (
@@ -360,7 +361,7 @@ export default function UsersPage() {
                                   </DropdownMenuItem>
                                 ) : (
                                   <DropdownMenuItem 
-                                    onClick={() => handleActivateUser(user.id)}
+                                    onClick={() => handleActivateUser(userId)}
                                     disabled={isActivating}
                                   >
                                     {isActivating ? (
@@ -372,7 +373,7 @@ export default function UsersPage() {
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem 
-                                  onClick={() => handleDeleteUser(user.id)}
+                                  onClick={() => handleDeleteUser(userId)}
                                   disabled={isDeleting}
                                   className="text-red-600"
                                 >
